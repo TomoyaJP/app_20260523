@@ -5,13 +5,6 @@ import { NextResponse } from "next/server";
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
-  // Developer-only zone. Everything else (including `/`) must pass through untouched.
-  const isDeveloperZone =
-    pathname.startsWith("/developer") || pathname.startsWith("/api/developer");
-  if (!isDeveloperZone) {
-    return NextResponse.next();
-  }
-
   const publicPrefixes = [
     "/developer/login",
     "/api/developer/auth/login",
@@ -36,11 +29,8 @@ export async function middleware(req: NextRequest) {
 }
 
 /**
- * Exclude Next internals / static assets, then bail out in-handler for `/` and non-developer routes.
- * This avoids platforms where narrowly-scoped matchers still misbehave around `/`.
+ * 開発者パスだけに適用。「/」「/apps」「/_next」などは middleware を通さず Next に任せる（Vercel での 404 回避）。
  */
 export const config = {
-  matcher: [
-    "/((?!_next/|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
-  ],
+  matcher: ["/developer/:path*", "/api/developer/:path*"],
 };
