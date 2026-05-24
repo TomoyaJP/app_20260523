@@ -1,0 +1,86 @@
+// https://www.prisma.io/docs/orm/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Registered indie apps indexed for similarity search (`@@map`: apps).
+model App {
+  id                String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String
+  description       String
+  url               String
+  platform          String
+  target_user       String?
+  use_case          String?
+  solved_problem    String?
+  suitable_for      String?
+  not_suitable_for  String?
+  tags              String[]                     @default([])
+  developer_contact String?
+  search_text       String?
+  /// OpenAI embedding of `search_text` (1536 dims). Queried via raw SQL pgvector ops.
+  embedding         Unsupported("vector(1536)")?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("apps")
+}
+
+/// Saved only when the user is not in secret mode (nothing is written for secret searches).
+model SearchLog {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  query_text           String
+  normalized_query     String?
+  category_tags        String[]  @default([])
+  matched_app_ids      String[]  @default([])
+  top_similarity_score Float?
+  is_secret            Boolean   @default(false)
+  created_at           DateTime  @default(now())
+
+  @@map("search_logs")
+}
+
+/// Clusters representing demand that existing apps weakly satisfy.
+model UnmetNeed {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  representative_query String
+  summary              String?
+  category_tags        String[] @default([])
+  interested_count     Int      @default(1)
+  related_app_ids      String[] @default([])
+  first_seen_at        DateTime @default(now())
+  last_seen_at         DateTime @default(now())
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+
+  /// Embedding for similarity merge (not user-facing JSON).
+  embedding Unsupported("vector(1536)")?
+
+  /// Persisted enrichment for `/developer/needs/[id]` (generated once; edited memo below).
+  ai_target_user_estimate  String?
+  ai_suggested_features    String?
+  ai_gap_notes             String?
+  developer_idea_notes     String?
+
+  queries UnmetNeedQuery[]
+
+  @@map("unmet_needs")
+}
+
+model UnmetNeedQuery {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  unmet_need_id String   @db.Uuid
+  query_text    String
+  created_at    DateTime @default(now())
+
+  need UnmetNeed @relation(fields: [unmet_need_id], references: [id], onDelete: Cascade)
+
+  @@map("unmet_need_queries")
+}
