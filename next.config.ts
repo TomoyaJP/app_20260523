@@ -1,10 +1,7 @@
-import path from "node:path";
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  turbopack: {
-    root: path.resolve(process.cwd()),
-  },
-};
+/** Keep config minimal so Vercel production builds resolve routes predictably (avoid turbopack.root skew). */
+
+const nextConfig: NextConfig = {};
 
 export default nextConfig;

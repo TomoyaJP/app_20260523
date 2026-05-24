@@ -8,7 +8,7 @@ export function SiteHeader() {
           FindFromProblem
         </Link>
         <nav className="flex flex-wrap items-center gap-3 text-sm text-zinc-600 dark:text-zinc-400">
-          <Link href="/" className="hover:text-emerald-700 dark:hover:text-emerald-300">
+          <Link href="/problem" className="hover:text-emerald-700 dark:hover:text-emerald-300">
             課題から探す
           </Link>
           <Link href="/apps" className="hover:text-emerald-700 dark:hover:text-emerald-300">

@@ -22,8 +22,20 @@ function createPrisma(): PrismaClient {
   return new PrismaClient({ adapter });
 }
 
-export const prisma = globalThis.prisma ?? createPrisma();
-
-if (process.env.NODE_ENV !== "production") {
-  globalThis.prisma = prisma;
+function getClient(): PrismaClient {
+  if (!globalThis.prisma) {
+    globalThis.prisma = createPrisma();
+  }
+  return globalThis.prisma;
 }
+
+/**
+ * Lazy proxy so importing this module does not instantiate Postgres at load time.
+ * DATABASE_URL errors surface on first DB access (still required at runtime/build when routes run).
+ */
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    const client = getClient();
+    return Reflect.get(client, prop, client);
+  },
+});
